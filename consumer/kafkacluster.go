@@ -77,11 +77,12 @@ func (cons *KafkaCluster) readMessages() {
 	defer func() {
 		if !cons.client.Closed() {
 			cons.consumer.Close()
+			Log.Note.Print("KafkaCluster closed consumers")
 		}
 		cons.WorkerDone()
 	}()
 
-	spin := shared.NewSpinner(shared.SpinPriorityLow)
+	spin := shared.NewSpinner(shared.SpinPriorityHigh)
 
 	for !cons.client.Closed() {
 		cons.WaitOnFuse()
@@ -131,7 +132,9 @@ func (cons *KafkaCluster) Consume(workers *sync.WaitGroup) {
 
 	defer func() {
 		cons.commit()
+		cons.consumer.Close()
 		cons.client.Close()
+		Log.Note.Println("KafkaCluster closed client")
 	}()
 
 	cons.TickerControlLoop(cons.commitDuration, cons.commit)
