@@ -75,11 +75,18 @@ func (cons *KafkaCluster) Configure(conf core.PluginConfig) error {
 func (cons *KafkaCluster) readMessages() {
 	cons.AddWorker()
 	defer func() {
-		if !cons.client.Closed() {
-			cons.consumer.Close()
-			Log.Note.Print("KafkaCluster closed consumers")
+		if r := recover(); r != nil {
+			Log.Note.Print("Recover : ", r)
 		}
 		cons.WorkerDone()
+	}()
+	defer func() {
+		if !cons.client.Closed() {
+			if cons.consumer != nil {
+				cons.consumer.Close()
+			}
+			Log.Note.Print("KafkaCluster closed consumers")
+		}
 	}()
 
 	spin := shared.NewSpinner(shared.SpinPriorityHigh)
